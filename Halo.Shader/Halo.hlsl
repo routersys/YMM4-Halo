@@ -77,6 +77,6 @@ float4 main(
         light += ScatterTexture.SampleLevel(ScatterSampler, float2(scatterU, scatterV), 0).rgb;
 
     float3 linearColor = SrgbToLinear(saturate(source.rgb / source.a));
-    linearColor += light * amount;
+    linearColor += (1.0 - exp(-light)) * amount;
     return float4(LinearToSrgb(saturate(linearColor)) * source.a, source.a);
 }
