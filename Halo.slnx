@@ -10,6 +10,7 @@
     <BuildDependency Project="Halo.Shader/Halo.Shader.vcxproj" />
   </Project>
   <Project Path="Halo.Tests/Halo.Tests.csproj" />
+  <Project Path="Halo.Harness/Halo.Harness.csproj" />
   <Project Path="Halo.Shader/Halo.Shader.vcxproj">
     <BuildType Solution="*|*" Project="Release" />
     <Platform Solution="*|*" Project="Win32" />
