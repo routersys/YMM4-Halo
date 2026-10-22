@@ -43,7 +43,7 @@ internal static class HaloSettings
     public const double MinimumTiltDegrees = 0.1;
     public const double MaximumTiltDegrees = 5.0;
     public const double MinimumPlateThickness = 0.05;
-    public const double MaximumPlateThickness = 0.5;
+    public const double MaximumPlateThickness = 1.0;
     public const double MinimumColumnLength = 1.0;
     public const double MaximumColumnLength = 6.0;
 

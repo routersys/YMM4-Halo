@@ -62,7 +62,7 @@ public sealed class HaloEffect : VideoEffectBase
 
     [Display(GroupName = nameof(Texts.CrystalGroup), Name = nameof(Texts.PlateThickness), Description = nameof(Texts.PlateThicknessDescription), Order = 33, ResourceType = typeof(Texts))]
     [AnimationSlider("F2", "", HaloSettings.MinimumPlateThickness, HaloSettings.MaximumPlateThickness)]
-    public Animation PlateThickness { get; } = new Animation(0.2, HaloSettings.MinimumPlateThickness, HaloSettings.MaximumPlateThickness);
+    public Animation PlateThickness { get; } = new Animation(0.4, HaloSettings.MinimumPlateThickness, HaloSettings.MaximumPlateThickness);
 
     [Display(GroupName = nameof(Texts.CrystalGroup), Name = nameof(Texts.ColumnLength), Description = nameof(Texts.ColumnLengthDescription), Order = 34, ResourceType = typeof(Texts))]
     [AnimationSlider("F2", "", HaloSettings.MinimumColumnLength, HaloSettings.MaximumColumnLength)]
