@@ -21,13 +21,13 @@ internal static class RingProfile
         var weights = SolarSpectrum.Weights;
         var referenceIndex = IceOptics.RefractiveIndex(HaloSettings.ReferenceWavelengthNanometers);
         var indices = Enumerable.Range(0, weights.Length).Select(index => IceOptics.RefractiveIndex(HaloSettings.GetWavelengthNanometers(index))).ToArray();
-        var total = new double[width * channels];
+        var rows = new double[inclinations][];
         Parallel.For(
             0,
             inclinations,
-            () => new double[width * channels],
-            [MethodImpl(MethodImplOptions.AggressiveOptimization)] (row, _, histogram) =>
+            [MethodImpl(MethodImplOptions.AggressiveOptimization)] (row) =>
             {
+                var histogram = new double[width * channels];
                 var inclination = (row + 0.5) * inclinationStep;
                 Span<PrismPath> paths = stackalloc PrismPath[PrismGeometry.MaximumPathCount];
                 for (var column = 0; column < azimuths; column++)
@@ -57,16 +57,15 @@ internal static class RingProfile
                     }
                 }
 
-                return histogram;
-            },
-            histogram =>
-            {
-                lock (total)
-                {
-                    for (var index = 0; index < total.Length; index++)
-                        total[index] += histogram[index];
-                }
+                rows[row] = histogram;
             });
+
+        var total = new double[width * channels];
+        foreach (var histogram in rows)
+        {
+            for (var index = 0; index < total.Length; index++)
+                total[index] += histogram[index];
+        }
 
         var stepRadians = step * HaloSettings.RadiansPerDegree;
         for (var index = 0; index < width; index++)

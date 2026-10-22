@@ -6,16 +6,17 @@ internal sealed class ScatterGrid
 {
     public const int Width = HaloSettings.ScatterWidth;
     public const int Height = HaloSettings.ScatterHeight;
+    public const double FixedScale = 1073741824.0;
 
     private const double TexelsPerDegree = 1.0 / HaloSettings.ScatterTexelDegrees;
     private const int Channels = HaloSettings.ColorChannels;
 
     public ScatterGrid()
     {
-        Cells = new float[Width * Height * Channels];
+        Cells = new long[Width * Height * Channels];
     }
 
-    public float[] Cells { get; }
+    public long[] Cells { get; }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public unsafe void Splat(double azimuthDegrees, double elevationOffsetDegrees, Tristimulus weight)
@@ -27,19 +28,19 @@ internal sealed class ScatterGrid
         if (row < -1 || row >= Height)
             return;
 
-        var fractionX = (float)(x - column);
-        var fractionY = (float)(y - row);
+        var fractionX = x - column;
+        var fractionY = y - row;
         var left = Reflect(column) * Channels;
         var right = Reflect(column + 1) * Channels;
-        var wx = (float)weight.X;
-        var wy = (float)weight.Y;
-        var wz = (float)weight.Z;
-        fixed (float* cells = Cells)
+        var wx = weight.X * FixedScale;
+        var wy = weight.Y * FixedScale;
+        var wz = weight.Z * FixedScale;
+        fixed (long* cells = Cells)
         {
             if (row >= 0)
-                Add(cells + row * Width * Channels, left, right, (1f - fractionY) * (1f - fractionX), (1f - fractionY) * fractionX, wx, wy, wz);
+                Add(cells + row * Width * Channels, left, right, (1.0 - fractionY) * (1.0 - fractionX), (1.0 - fractionY) * fractionX, wx, wy, wz);
             if (row + 1 < Height)
-                Add(cells + (row + 1) * Width * Channels, left, right, fractionY * (1f - fractionX), fractionY * fractionX, wx, wy, wz);
+                Add(cells + (row + 1) * Width * Channels, left, right, fractionY * (1.0 - fractionX), fractionY * fractionX, wx, wy, wz);
         }
     }
 
@@ -49,14 +50,14 @@ internal sealed class ScatterGrid
             Cells[index] += other.Cells[index];
     }
 
-    private static unsafe void Add(float* line, int left, int right, float leftScale, float rightScale, float wx, float wy, float wz)
+    private static unsafe void Add(long* line, int left, int right, double leftScale, double rightScale, double wx, double wy, double wz)
     {
-        line[left] += leftScale * wx;
-        line[left + 1] += leftScale * wy;
-        line[left + 2] += leftScale * wz;
-        line[right] += rightScale * wx;
-        line[right + 1] += rightScale * wy;
-        line[right + 2] += rightScale * wz;
+        line[left] += (long)(leftScale * wx + 0.5);
+        line[left + 1] += (long)(leftScale * wy + 0.5);
+        line[left + 2] += (long)(leftScale * wz + 0.5);
+        line[right] += (long)(rightScale * wx + 0.5);
+        line[right + 1] += (long)(rightScale * wy + 0.5);
+        line[right + 2] += (long)(rightScale * wz + 0.5);
     }
 
     private static int Reflect(int column)

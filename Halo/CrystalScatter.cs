@@ -354,10 +354,10 @@ internal static class CrystalScatter
         {
             var elevation = Math.Min(Math.Abs(HaloSettings.GetScatterElevationDegrees(row, sunElevationDegrees)), 90.0) * HaloSettings.RadiansPerDegree;
             var solidAngle = Math.Max(Math.Cos(elevation), HaloSettings.ScatterMinimumCosine) * texel * texel;
-            var scale = (float)(1.0 / (2.0 * solidAngle));
+            var scale = 1.0 / (2.0 * solidAngle * ScatterGrid.FixedScale);
             var start = row * ScatterGrid.Width * HaloSettings.ColorChannels;
             for (var index = start; index < start + ScatterGrid.Width * HaloSettings.ColorChannels; index++)
-                radiance[index] = grid.Cells[index] * scale;
+                radiance[index] = (float)(grid.Cells[index] * scale);
         }
 
         return radiance;
