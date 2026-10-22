@@ -47,8 +47,8 @@ internal static class HaloSettings
     public const double MinimumColumnLength = 1.0;
     public const double MaximumColumnLength = 6.0;
 
-    public const int RandomInclinationSteps = 900;
-    public const int RandomAzimuthSteps = 120;
+    public const int RandomInclinationSteps = 450;
+    public const int RandomAzimuthSteps = 60;
     public const int EndFaceSubdivisions = 4;
     public const int PlateSpinSteps = 60;
     public const int PlateTiltRadialNodes = 8;
