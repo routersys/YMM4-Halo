@@ -18,6 +18,7 @@ internal static class HaloSettings
     public const int ScatterWidth = 600;
     public const int ScatterHeight = 267;
     public const double ScatterElevationHalfSpanDegrees = 40.0;
+    public const double ScatterElevationTaperDegrees = 8.0;
     public const double ScatterMinimumCosine = 0.05;
 
     public const double WavelengthStartNanometers = 400.0;
@@ -49,17 +50,24 @@ internal static class HaloSettings
     public const int RandomInclinationSteps = 900;
     public const int RandomAzimuthSteps = 120;
     public const int EndFaceSubdivisions = 4;
-    public const int PlateSpinSteps = 120;
-    public const int PlateTiltRadialNodes = 6;
-    public const int PlateTiltAngleNodes = 12;
-    public const int ColumnSpinSteps = 90;
-    public const int ColumnAzimuthSteps = 360;
-    public const double SegmentSubStepTexels = 0.5;
+    public const int PlateSpinSteps = 60;
+    public const int PlateTiltRadialNodes = 8;
+    public const int PlateTiltAngleSteps = 24;
+    public const int ColumnSpinSteps = 45;
+    public const int ColumnAzimuthSteps = 180;
+    public const int ColumnWavelengthStride = 2;
+    public const int StripsPerTask = 4;
+    public const int MaximumSubSteps = 24;
+    public const double SubStepTexels = 1.0;
 
     public static readonly float MinimumHalfFieldTangent = GetHalfFieldOfViewTangent(MinimumFieldOfViewDegrees);
     public static readonly float MaximumHalfFieldTangent = GetHalfFieldOfViewTangent(MaximumFieldOfViewDegrees);
 
-    public static readonly double[] ColumnTiltQuantiles = [-1.2815515655446004, -0.5244005101, 0.0, 0.5244005101, 1.2815515655446004];
+    public static readonly double[] ColumnTiltQuantiles =
+    [
+        -1.593218818023, -0.967421566102, -0.58945579785, -0.282216147063, 0.0,
+        0.282216147063, 0.58945579785, 0.967421566102, 1.593218818023,
+    ];
 
     public static double GetRingStepDegrees()
         => (RingEndDegrees - RingStartDegrees) / (RingTableWidth - 1);
