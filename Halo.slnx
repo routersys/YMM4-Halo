@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="Halo/Halo.csproj">
+    <BuildDependency Project="Halo.Shader/Halo.Shader.vcxproj" />
+  </Project>
+  <Project Path="Halo.Shader/Halo.Shader.vcxproj">
+    <BuildType Solution="*|*" Project="Release" />
+    <Platform Solution="*|*" Project="Win32" />
+  </Project>
+</Solution>
