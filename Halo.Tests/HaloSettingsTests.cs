@@ -188,6 +188,16 @@ public sealed class HaloSettingsTests
     }
 
     [Theory]
+    [InlineData(400.0, 22913188428920.8)]
+    [InlineData(550.0, 25734915475999.734)]
+    [InlineData(780.0, 17608041868593.953)]
+    public void TheSunSpectrumHasThePlanckRadianceOfABlackBodyAtTheSolarTemperature(double wavelength, double expected)
+    {
+        Assert.Equal(5772.0, HaloSettings.SolarTemperature);
+        Assert.Equal(expected, SolarSpectrum.Radiance(wavelength, 5772.0), expected * 1e-9);
+    }
+
+    [Theory]
     [InlineData(555.0, 1.0, 0.05)]
     [InlineData(450.0, 0.04, 0.03)]
     public void TheColorMatchingFunctionsFollowTheCieLuminousEfficiency(double wavelength, double expectedY, double tolerance)
