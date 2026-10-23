@@ -141,7 +141,7 @@ public sealed class HaloTableTests
         }
 
         Assert.True(checkedTexels > 20);
-        Assert.True(Enumerable.Range(0, HaloSettings.RingTableWidth).Any(texel => Value(normal, texel, 0) - Value(normal, texel, 2) > 0.01f));
+        Assert.Contains(Enumerable.Range(0, HaloSettings.RingTableWidth), texel => Value(normal, texel, 0) - Value(normal, texel, 2) > 0.01f);
     }
 
     [Fact]
