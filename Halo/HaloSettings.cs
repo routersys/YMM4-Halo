@@ -78,6 +78,9 @@ internal static class HaloSettings
     public static double GetSunRadiusDegrees(double sunDiameterDegrees)
         => Math.Clamp(sunDiameterDegrees, 0.0, MaximumSunDiameterDegrees) / 2.0;
 
+    public static double GetPlateTiltQuantile(int node)
+        => Math.Sqrt(-2.0 * Math.Log(1.0 - (node + 0.5) / PlateTiltRadialNodes));
+
     public static int GetWavelengthCount()
         => (int)Math.Round((WavelengthEndNanometers - WavelengthStartNanometers) / WavelengthStepNanometers) + 1;
 

@@ -329,7 +329,7 @@ internal static class CrystalScatter
         var tilt = tiltDegrees * HaloSettings.RadiansPerDegree;
         var layers = new Layer[nodes];
         for (var node = 0; node < nodes; node++)
-            layers[node] = new Layer(tilt * Math.Sqrt(-2.0 * Math.Log(1.0 - (node + 0.5) / nodes)), 1.0 / nodes);
+            layers[node] = new Layer(tilt * HaloSettings.GetPlateTiltQuantile(node), 1.0 / nodes);
         return layers;
     }
 
