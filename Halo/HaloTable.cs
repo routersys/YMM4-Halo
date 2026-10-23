@@ -57,10 +57,12 @@ internal static class HaloTable
     }
 
     private static double[] RingColors(double sunDiameterDegrees)
+        => RingColors(sunDiameterDegrees, RingProfile.Radiance);
+
+    public static double[] RingColors(double sunDiameterDegrees, double[] profile)
     {
         var width = HaloSettings.RingTableWidth;
         var channels = HaloSettings.ColorChannels;
-        var profile = RingProfile.Radiance;
         var kernel = SunKernel(sunDiameterDegrees);
         var half = kernel.Length / 2;
         var (whiteRed, whiteGreen, whiteBlue) = SolarSpectrum.ToLinearSrgb(SolarSpectrum.White);

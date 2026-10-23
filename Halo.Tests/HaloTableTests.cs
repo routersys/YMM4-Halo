@@ -179,6 +179,23 @@ public sealed class HaloTableTests
     }
 
     [Fact]
+    public void ALightColoredLikeTheSunStaysWhiteInTheRingColors()
+    {
+        var white = SolarSpectrum.White;
+        var profile = new double[HaloSettings.RingTableWidth * HaloSettings.ColorChannels];
+        for (var index = 0; index < HaloSettings.RingTableWidth; index++)
+        {
+            profile[index * HaloSettings.ColorChannels] = 2.0 * white.X;
+            profile[index * HaloSettings.ColorChannels + 1] = 2.0 * white.Y;
+            profile[index * HaloSettings.ColorChannels + 2] = 2.0 * white.Z;
+        }
+
+        var colors = HaloTable.RingColors(1.0, profile);
+
+        Assert.All(Enumerable.Range(0, colors.Length), index => Assert.Equal(2.0, colors[index], 1e-9));
+    }
+
+    [Fact]
     public void TheRingTableIsTheSameForTheSameInput()
     {
         Assert.True(HaloTable.ComposeRing(0.7, 0.6, 1.3).AsSpan().SequenceEqual(HaloTable.ComposeRing(0.7, 0.6, 1.3)));
