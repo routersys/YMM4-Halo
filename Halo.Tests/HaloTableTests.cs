@@ -302,6 +302,36 @@ public sealed class HaloTableTests
         Assert.True(Lit(blurred) > 10);
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(ScatterGrid.Width - 2)]
+    [InlineData(ScatterGrid.Width - 3)]
+    public void BlurringALightNearTheAzimuthEdgeKeepsItsPower(int column)
+    {
+        var impulse = Impulse(133, column, 40.0);
+
+        var sharp = HaloTable.ComposeScatter(impulse, Empty(), 1.0, 0.0, 20.0, 0.0, 1.0);
+        var blurred = HaloTable.ComposeScatter(impulse, Empty(), 1.0, 0.0, 20.0, 2.0, 1.0);
+
+        Assert.Equal(ScatterLuminancePower(sharp, 20.0), ScatterLuminancePower(blurred, 20.0), ScatterLuminancePower(sharp, 20.0) * 0.02);
+    }
+
+    [Fact]
+    public void TheBlurIsWiderAcrossTheAzimuthWhereTheSunIsHigh()
+    {
+        int LitInTheSunRow(double sunElevation)
+        {
+            var texels = HaloTable.ComposeScatter(Impulse(133, 300, 40.0), Empty(), 1.0, 0.0, sunElevation, 2.0, 1.0);
+            return Enumerable.Range(0, ScatterGrid.Width).Count(column => Value(texels, 133 * ScatterGrid.Width + column, 1) > 1e-4f);
+        }
+
+        var low = LitInTheSunRow(0.0);
+        var high = LitInTheSunRow(60.0);
+
+        Assert.InRange(high, 1.6 * low, 2.4 * low);
+    }
+
     [Fact]
     public void TheScatterTableFadesToNothingAtTheTopAndBottomRows()
     {
