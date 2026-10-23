@@ -106,7 +106,7 @@ internal sealed class HaloEffectProcessor(IGraphicsDevicesAndContext devices, Ha
             HaloSettings.GetHalfFieldOfViewTangent(_item.FieldOfView.GetValue(frame, length, fps)),
             (float)Math.Cos(pitch * HaloSettings.RadiansPerDegree),
             (float)Math.Sin(pitch * HaloSettings.RadiansPerDegree),
-            (float)(Math.Clamp(direction, -180.0, 180.0) * HaloSettings.RadiansPerDegree),
+            (float)(direction * HaloSettings.RadiansPerDegree),
             (float)elevation);
         if (_isFirst || _constantKey.SunX != constantKey.SunX)
             _effect.SunX = constantKey.SunX;
