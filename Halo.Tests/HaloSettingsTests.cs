@@ -161,6 +161,20 @@ public sealed class HaloSettingsTests
     }
 
     [Fact]
+    public void ThePlateTiltNodesAreTheMidpointQuantilesOfTheRayleighDistribution()
+    {
+        var previous = 0.0;
+        for (var node = 0; node < HaloSettings.PlateTiltRadialNodes; node++)
+        {
+            var radius = HaloSettings.GetPlateTiltQuantile(node);
+
+            Assert.Equal((node + 0.5) / HaloSettings.PlateTiltRadialNodes, 1.0 - Math.Exp(-0.5 * radius * radius), 1e-12);
+            Assert.True(radius > previous);
+            previous = radius;
+        }
+    }
+
+    [Fact]
     public void TheSunSpectrumFollowsPlancksLaw()
     {
         var blue = SolarSpectrum.Radiance(450.0, HaloSettings.SolarTemperature);
