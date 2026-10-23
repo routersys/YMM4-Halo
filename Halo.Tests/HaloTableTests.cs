@@ -196,6 +196,26 @@ public sealed class HaloTableTests
     }
 
     [Fact]
+    public void TheSunKernelIsTheChordProfileOfAUniformDisc()
+    {
+        const double Diameter = 2.0;
+        var kernel = HaloTable.SunKernel(Diameter);
+        var half = kernel.Length / 2;
+        var step = HaloSettings.GetRingStepDegrees();
+        var radius = HaloSettings.GetSunRadiusDegrees(Diameter);
+
+        Assert.True(half > 5);
+        Assert.Equal(1.0, kernel.Sum(), 1e-12);
+        for (var offset = -half; offset <= half; offset++)
+        {
+            var distance = offset * step / radius;
+
+            Assert.Equal(Math.Sqrt(1.0 - distance * distance), kernel[offset + half] / kernel[half], 1e-12);
+            Assert.Equal(kernel[half - offset], kernel[half + offset], 1e-15);
+        }
+    }
+
+    [Fact]
     public void TheRingTableIsTheSameForTheSameInput()
     {
         Assert.True(HaloTable.ComposeRing(0.7, 0.6, 1.3).AsSpan().SequenceEqual(HaloTable.ComposeRing(0.7, 0.6, 1.3)));

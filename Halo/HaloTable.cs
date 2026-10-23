@@ -98,7 +98,7 @@ internal static class HaloTable
         return peak > 0.0 ? HaloSettings.RingPeakBrightness / peak : 0.0;
     }
 
-    private static double[] SunKernel(double sunDiameterDegrees)
+    public static double[] SunKernel(double sunDiameterDegrees)
     {
         var radius = HaloSettings.GetSunRadiusDegrees(sunDiameterDegrees);
         var step = HaloSettings.GetRingStepDegrees();
