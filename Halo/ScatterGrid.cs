@@ -18,7 +18,7 @@ internal sealed class ScatterGrid
 
     public long[] Cells { get; }
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe void Splat(double azimuthDegrees, double elevationOffsetDegrees, Tristimulus weight)
     {
         var x = Math.Abs(azimuthDegrees) * TexelsPerDegree - 0.5;
@@ -50,6 +50,7 @@ internal sealed class ScatterGrid
             Cells[index] += other.Cells[index];
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static unsafe void Add(long* line, int left, int right, double leftScale, double rightScale, double wx, double wy, double wz)
     {
         line[left] += (long)(leftScale * wx + 0.5);
@@ -60,6 +61,7 @@ internal sealed class ScatterGrid
         line[right + 2] += (long)(rightScale * wz + 0.5);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int Reflect(int column)
     {
         if (column < 0)

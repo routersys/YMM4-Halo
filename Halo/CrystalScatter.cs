@@ -293,7 +293,7 @@ internal static class CrystalScatter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void SplatPatch(ScatterGrid grid, Corner c00, Corner c01, Corner c10, Corner c11, double quadWeight)
+    private static unsafe void SplatPatch(ScatterGrid grid, in Corner c00, in Corner c01, in Corner c10, in Corner c11, double quadWeight)
     {
         var along = Math.Max(Distance(c00, c10), Distance(c01, c11));
         var across = Math.Max(Distance(c00, c01), Distance(c10, c11));
@@ -301,15 +301,25 @@ internal static class CrystalScatter
         var alongSteps = Math.Clamp((int)Math.Ceiling(along / stepDegrees), 1, HaloSettings.MaximumSubSteps);
         var acrossSteps = Math.Clamp((int)Math.Ceiling(across / stepDegrees), 1, HaloSettings.MaximumSubSteps);
         var unit = quadWeight / (alongSteps * acrossSteps);
+        var ts = stackalloc double[HaloSettings.MaximumSubSteps];
+        var complements = stackalloc double[HaloSettings.MaximumSubSteps];
+        for (var second = 0; second < acrossSteps; second++)
+        {
+            var t = (second + 0.5) / acrossSteps;
+            ts[second] = t;
+            complements[second] = 1.0 - t;
+        }
+
         for (var first = 0; first < alongSteps; first++)
         {
             var s = (first + 0.5) / alongSteps;
+            var complement = 1.0 - s;
             for (var second = 0; second < acrossSteps; second++)
             {
-                var t = (second + 0.5) / acrossSteps;
-                var w00 = (1.0 - s) * (1.0 - t);
-                var w01 = (1.0 - s) * t;
-                var w10 = s * (1.0 - t);
+                var t = ts[second];
+                var w00 = complement * complements[second];
+                var w01 = complement * t;
+                var w10 = s * complements[second];
                 var w11 = s * t;
                 var weight = (w00 * c00.Weight) + (w01 * c01.Weight) + (w10 * c10.Weight) + (w11 * c11.Weight);
                 grid.Splat(
@@ -327,7 +337,7 @@ internal static class CrystalScatter
         return reference - azimuth > HalfTurnDegrees ? azimuth + FullTurnDegrees : azimuth;
     }
 
-    private static double Distance(Corner first, Corner second)
+    private static double Distance(in Corner first, in Corner second)
         => Math.Max(Math.Abs(first.Azimuth - second.Azimuth), Math.Abs(first.Elevation - second.Elevation));
 
     private static Chunk[] BuildChunks(Layer[] layers, int azimuthSteps)
