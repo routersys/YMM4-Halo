@@ -85,7 +85,9 @@ YukkuriMovieMaker4（YMM4）上で動作する、太陽の高度とカメラの�
 
 太陽の方向は「太陽の高度」「太陽の向き」「チルト」から求めます。カメラが水平を向いているとき、太陽は地平線から「太陽の高度」だけ上にあります。「太陽の向き」はカメラが向く方角から太陽までの水平方向の角度で、0°が正面、正の値が右です。「チルト」はカメラを上へ向ける角度で、正の値が上向きです。カメラを上へ向けると、太陽は画面の下へ動きます。太陽の向きが0°で、太陽の高度とチルトが同じとき、太陽は画面の中央にあります。
 
-冒頭の画像は、海辺の空が写る写真に、「太陽の高度」と「チルト」を15°にして適用した例です。ほかの項目は既定値で、太陽は画面の中央に来ます。上が入力、下が出力です。空だけにハロを足し、海面と地面は元の写真のままにしています。元の写真は、Wikimedia CommonsにCC0で公開されているGreg Zaal氏とRico Cilliers氏の全周パノラマ「[Furry clouds – Panorama (Greg Zaal and Rico Cilliers via Poly Haven)](https://commons.wikimedia.org/wiki/File:Furry_clouds_%E2%80%93_Panorama_%28Greg_Zaal_and_Rico_Cilliers_via_Poly_Haven%29.jpg)」から、画角100°で切り出したものです。
+次の画像は、海辺の空が写る写真に、「太陽の高度」と「チルト」を15°にして適用した例です。ほかの項目は既定値で、太陽は画面の中央に来ます。上が入力、下が出力です。空だけにハロを足し、海面と地面は元の写真のままにしています。元の写真は、Wikimedia CommonsにCC0で公開されているGreg Zaal氏とRico Cilliers氏の全周パノラマ「[Furry clouds – Panorama (Greg Zaal and Rico Cilliers via Poly Haven)](https://commons.wikimedia.org/wiki/File:Furry_clouds_%E2%80%93_Panorama_%28Greg_Zaal_and_Rico_Cilliers_via_Poly_Haven%29.jpg)」から、画角100°で切り出したものです。
+
+![Image](https://github.com/routersys/YMM4-Halo/blob/main/docs/Halo-Sky.png)
 
 画素が見ている方向は「画角」から決めます。処理する範囲は、このエフェクトに入る映像を囲む矩形です。画角は処理する範囲の横幅に対する水平方向の画角で、レンズのゆがみがない透視投影として扱います。処理する範囲の中心がカメラの向く方向です。
 
@@ -173,7 +175,7 @@ $$
 
 タンジェントアークは内暈の上と下に接する弧になります。内暈と太陽のあいだには、柱状の氷晶の光は届きません。
 
-次の画像は、太陽が低い空と高い空が写る2枚の写真に適用した例です。「太陽の高度」と「チルト」を、左は15°、右は57°にしました。ほかの項目は既定値で、太陽は画面の中央に来ます。15°と57°は、パノラマに写る太陽の位置から測った高度を整数に丸めた値です。左の写真は冒頭の画像と同じパノラマから、右の写真はWikimedia CommonsにCC0で公開されているGreg Zaal氏の全周パノラマ「[Cloud layers – Panorama (Greg Zaal via Poly Haven)](https://commons.wikimedia.org/wiki/File:Cloud_layers_%E2%80%93_Panorama_%28Greg_Zaal_via_Poly_Haven%29.jpg)」から、画角100°で切り出したものです。
+次の画像は、太陽が低い空と高い空が写る2枚の写真に適用した例です。「太陽の高度」と「チルト」を、左は15°、右は57°にしました。ほかの項目は既定値で、太陽は画面の中央に来ます。15°と57°は、パノラマに写る太陽の位置から測った高度を整数に丸めた値です。左の写真は1節の画像と同じパノラマから、右の写真はWikimedia CommonsにCC0で公開されているGreg Zaal氏の全周パノラマ「[Cloud layers – Panorama (Greg Zaal via Poly Haven)](https://commons.wikimedia.org/wiki/File:Cloud_layers_%E2%80%93_Panorama_%28Greg_Zaal_via_Poly_Haven%29.jpg)」から、画角100°で切り出したものです。
 
 太陽が低いと、上部のタンジェントアークはV字形になり、幻日は太陽の近くで明るく見えます。太陽が高くなると、タンジェントアークは内暈を囲む楕円形に広がります。この楕円形は外接ハロと呼ばれます。幻日は太陽から離れて弱くなります。
 
