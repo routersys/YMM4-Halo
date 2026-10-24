@@ -40,7 +40,7 @@ internal static class HaloTable
         var (whiteRed, whiteGreen, whiteBlue) = SolarSpectrum.ToLinearSrgb(SolarSpectrum.White);
         var texels = new Half[width * height * HaloSettings.TexelChannels];
         var scale = Scale.Value;
-        for (var row = 0; row < height; row++)
+        Parallel.For(0, height, row =>
         {
             var offset = HaloSettings.GetScatterElevationDegrees(row, sunElevationDegrees) - sunElevationDegrees;
             var taper = SmoothStep(-HaloSettings.ScatterElevationHalfSpanDegrees, -HaloSettings.ScatterElevationHalfSpanDegrees + HaloSettings.ScatterElevationTaperDegrees, offset)
@@ -51,7 +51,7 @@ internal static class HaloTable
                 var (red, green, blue) = SolarSpectrum.ToLinearSrgb(new Tristimulus(blurred[source], blurred[source + 1], blurred[source + 2]));
                 Write(texels, row * width + column0, red / whiteRed * scale * taper, green / whiteGreen * scale * taper, blue / whiteBlue * scale * taper, saturation);
             }
-        }
+        });
 
         return texels;
     }
@@ -129,7 +129,7 @@ internal static class HaloTable
         var texel = HaloSettings.ScatterTexelDegrees;
         var extent = width + 2 * MaximumBlurTexels;
         var prefix = new double[height * channels * (extent + 1)];
-        for (var row = 0; row < height; row++)
+        Parallel.For(0, height, row =>
         {
             for (var channel = 0; channel < channels; channel++)
             {
@@ -140,11 +140,11 @@ internal static class HaloTable
                     prefix[start + index + 1] = prefix[start + index] + values[(row * width + column) * channels + channel];
                 }
             }
-        }
+        });
 
         var verticalRadius = (int)Math.Floor(radiusDegrees / texel);
         var result = new double[values.Length];
-        for (var row = 0; row < height; row++)
+        Parallel.For(0, height, row =>
         {
             var elevation = Math.Min(Math.Abs(HaloSettings.GetScatterElevationDegrees(row, sunElevationDegrees)), 90.0) * HaloSettings.RadiansPerDegree;
             var horizontalScale = 1.0 / (texel * Math.Max(Math.Cos(elevation), HaloSettings.ScatterMinimumCosine));
@@ -161,7 +161,7 @@ internal static class HaloTable
             if (area <= 0.0)
             {
                 Array.Copy(values, row * width * channels, result, row * width * channels, width * channels);
-                continue;
+                return;
             }
 
             for (var column = 0; column < width; column++)
@@ -180,7 +180,7 @@ internal static class HaloTable
                     result[(row * width + column) * channels + channel] = sum / area;
                 }
             }
-        }
+        });
 
         return result;
     }
