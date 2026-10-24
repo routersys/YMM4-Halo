@@ -62,6 +62,29 @@ public sealed class ScatterGridTests
     }
 
     [Fact]
+    public void TheSumOfGridsAddsEveryCellOfEveryGrid()
+    {
+        var first = new ScatterGrid();
+        var second = new ScatterGrid();
+        for (var row = 0; row < ScatterGrid.Height; row++)
+        {
+            for (var column = 0; column < ScatterGrid.Width; column++)
+            {
+                var azimuth = (column + 0.5) * HaloSettings.ScatterTexelDegrees;
+                var elevation = -HaloSettings.ScatterElevationHalfSpanDegrees + (row + 0.5) * HaloSettings.ScatterTexelDegrees;
+                first.Splat(azimuth, elevation, Unit);
+                second.Splat(azimuth + 0.1, elevation + 0.1, new Tristimulus(2.0, 0.5, 3.0));
+            }
+        }
+
+        var total = ScatterGrid.Sum([first, second, new ScatterGrid()]);
+
+        var expected = first.Cells.Zip(second.Cells, (left, right) => left + right).ToArray();
+        Assert.Contains(expected, cell => cell != 0);
+        Assert.True(total.Cells.AsSpan().SequenceEqual(expected));
+    }
+
+    [Fact]
     public void AnAzimuthPastHalfATurnFoldsBackIntoTheTable()
     {
         var grid = new ScatterGrid();
