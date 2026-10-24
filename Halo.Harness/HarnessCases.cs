@@ -31,6 +31,10 @@ internal static class HarnessCases
         yield return ("column-arcs-0", Create(effect => effect.ColumnArcs.Values[0].Value = 0), [0]);
         yield return ("plate-halos-only", Create(effect => { effect.RandomHalos.Values[0].Value = 0; effect.ColumnArcs.Values[0].Value = 0; effect.PlateHalos.Values[0].Value = 100; }), [0]);
         yield return ("column-arcs-only", Create(effect => { effect.RandomHalos.Values[0].Value = 0; effect.PlateHalos.Values[0].Value = 0; effect.ColumnArcs.Values[0].Value = 100; }), [0]);
+        yield return ("plate-halos-only-zenith", Create(effect => { effect.RandomHalos.Values[0].Value = 0; effect.ColumnArcs.Values[0].Value = 0; effect.PlateHalos.Values[0].Value = 100; effect.SunElevation.Values[0].Value = 90; effect.CameraPitch.Values[0].Value = 90; }), [0]);
+        yield return ("column-arcs-only-zenith", Create(effect => { effect.RandomHalos.Values[0].Value = 0; effect.PlateHalos.Values[0].Value = 0; effect.ColumnArcs.Values[0].Value = 100; effect.SunElevation.Values[0].Value = 90; effect.CameraPitch.Values[0].Value = 90; }), [0]);
+        yield return ("plate-halos-only-horizon", Create(effect => { effect.RandomHalos.Values[0].Value = 0; effect.ColumnArcs.Values[0].Value = 0; effect.PlateHalos.Values[0].Value = 100; effect.SunElevation.Values[0].Value = 0; effect.CameraPitch.Values[0].Value = 0; }), [0]);
+        yield return ("column-arcs-only-horizon", Create(effect => { effect.RandomHalos.Values[0].Value = 0; effect.PlateHalos.Values[0].Value = 0; effect.ColumnArcs.Values[0].Value = 100; effect.SunElevation.Values[0].Value = 0; effect.CameraPitch.Values[0].Value = 0; }), [0]);
         yield return ("plate-thickness-0.05", Create(effect => effect.PlateThickness.Values[0].Value = 0.05), [0]);
         yield return ("plate-thickness-1", Create(effect => effect.PlateThickness.Values[0].Value = 1), [0]);
         yield return ("column-length-1", Create(effect => effect.ColumnLength.Values[0].Value = 1), [0]);
