@@ -103,7 +103,7 @@ internal static class CrystalScatter
         var layers = plate ? PlateLayers(tiltDegrees) : ColumnLayers(tiltDegrees);
         var chunks = BuildChunks(layers, azimuthSteps);
         var bands = SolarSpectrum.Bands(plate ? 1 : HaloSettings.ColumnWavelengthStride);
-        var total = new ScatterGrid();
+        var grids = new System.Collections.Concurrent.ConcurrentBag<ScatterGrid>();
         Parallel.For(
             0,
             chunks.Length,
@@ -124,12 +124,8 @@ internal static class CrystalScatter
 
                 return workspace;
             },
-            workspace =>
-            {
-                lock (total)
-                    total.Add(workspace.Grid);
-            });
-        return ToRadiance(total, sunElevationDegrees);
+            workspace => grids.Add(workspace.Grid));
+        return ToRadiance(ScatterGrid.Sum([.. grids]), sunElevationDegrees);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -379,7 +375,7 @@ internal static class CrystalScatter
     {
         var texel = HaloSettings.ScatterTexelDegrees * HaloSettings.RadiansPerDegree;
         var radiance = new float[grid.Cells.Length];
-        for (var row = 0; row < ScatterGrid.Height; row++)
+        Parallel.For(0, ScatterGrid.Height, row =>
         {
             var elevation = Math.Min(Math.Abs(HaloSettings.GetScatterElevationDegrees(row, sunElevationDegrees)), 90.0) * HaloSettings.RadiansPerDegree;
             var solidAngle = Math.Max(Math.Cos(elevation), HaloSettings.ScatterMinimumCosine) * texel * texel;
@@ -387,7 +383,7 @@ internal static class CrystalScatter
             var start = row * ScatterGrid.Width * HaloSettings.ColorChannels;
             for (var index = start; index < start + ScatterGrid.Width * HaloSettings.ColorChannels; index++)
                 radiance[index] = (float)(grid.Cells[index] * scale);
-        }
+        });
 
         return radiance;
     }

@@ -10,6 +10,7 @@ internal sealed class ScatterGrid
 
     private const double TexelsPerDegree = 1.0 / HaloSettings.ScatterTexelDegrees;
     private const int Channels = HaloSettings.ColorChannels;
+    private const int SumBlock = 8192;
 
     public ScatterGrid()
     {
@@ -44,10 +45,21 @@ internal sealed class ScatterGrid
         }
     }
 
-    public void Add(ScatterGrid other)
+    public static ScatterGrid Sum(IReadOnlyList<ScatterGrid> grids)
     {
-        for (var index = 0; index < Cells.Length; index++)
-            Cells[index] += other.Cells[index];
+        var total = new ScatterGrid();
+        var cells = total.Cells;
+        Parallel.For(0, (cells.Length + SumBlock - 1) / SumBlock, block =>
+        {
+            var end = Math.Min((block + 1) * SumBlock, cells.Length);
+            foreach (var grid in grids)
+            {
+                var other = grid.Cells;
+                for (var index = block * SumBlock; index < end; index++)
+                    cells[index] += other[index];
+            }
+        });
+        return total;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
