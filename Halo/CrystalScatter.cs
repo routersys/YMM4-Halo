@@ -46,6 +46,7 @@ internal static class CrystalScatter
         public Vec3[] FirstAxes { get; } = new Vec3[nodeCount];
         public Vec3[] SecondAxes { get; } = new Vec3[nodeCount];
         public Sample[] Samples { get; } = new Sample[PrismGeometry.LabelCount * nodeCount * bands.Length];
+        public Corner[] Corners { get; } = new Corner[PrismGeometry.LabelCount * nodeCount];
         public bool[] Used { get; } = new bool[PrismGeometry.LabelCount];
         private int NodeCount { get; } = nodeCount;
 
@@ -60,9 +61,25 @@ internal static class CrystalScatter
                     continue;
 
                 Array.Clear(Samples, label * NodeCount * WavelengthCount, NodeCount * WavelengthCount);
+                Array.Clear(Corners, label * NodeCount, NodeCount);
                 Used[label] = false;
             }
         }
+
+        public void Combine()
+        {
+            for (var label = 0; label < Used.Length; label++)
+            {
+                if (!Used[label])
+                    continue;
+
+                for (var node = 0; node < NodeCount; node++)
+                    Corners[label * NodeCount + node] = CrystalScatter.Combine(Wavelengths(label, node), Bands);
+            }
+        }
+
+        public ref readonly Corner CornerAt(int label, int node)
+            => ref Corners[label * NodeCount + node];
 
         public ReadOnlySpan<Sample> Wavelengths(int label, int node)
             => Samples.AsSpan((label * NodeCount + node) * WavelengthCount, WavelengthCount);
@@ -164,6 +181,8 @@ internal static class CrystalScatter
                 }
             }
         }
+
+        data.Combine();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -183,18 +202,18 @@ internal static class CrystalScatter
                     previous.Wavelengths(label, node + 1),
                     current.Wavelengths(label, node),
                     current.Wavelengths(label, node + 1),
+                    previous.CornerAt(label, node),
+                    previous.CornerAt(label, node + 1),
+                    current.CornerAt(label, node),
+                    current.CornerAt(label, node + 1),
                     quadWeight);
             }
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void SplatQuad(ScatterGrid grid, SpectralBand[] bands, ReadOnlySpan<Sample> first, ReadOnlySpan<Sample> second, ReadOnlySpan<Sample> third, ReadOnlySpan<Sample> fourth, double quadWeight)
+    private static void SplatQuad(ScatterGrid grid, SpectralBand[] bands, ReadOnlySpan<Sample> first, ReadOnlySpan<Sample> second, ReadOnlySpan<Sample> third, ReadOnlySpan<Sample> fourth, in Corner c00, in Corner c01, in Corner c10, in Corner c11, double quadWeight)
     {
-        var c00 = Combine(first, bands);
-        var c01 = Combine(second, bands);
-        var c10 = Combine(third, bands);
-        var c11 = Combine(fourth, bands);
         var anchor = c00.Valid ? c00 : c01.Valid ? c01 : c10.Valid ? c10 : c11;
         if (!anchor.Valid)
             return;
