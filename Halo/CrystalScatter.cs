@@ -10,7 +10,6 @@ internal enum CrystalFamily
 
 internal static class CrystalScatter
 {
-    private const double SpinPeriodRadians = Math.PI / 3.0;
     private const double MergeSpreadDegrees = 0.075;
 
     private readonly record struct Layer(double Tilt, double Weight);
@@ -135,7 +134,7 @@ internal static class CrystalScatter
         var secondBase = axis.Cross(firstBase);
         for (var node = 0; node <= spinSteps; node++)
         {
-            var (sine, cosine) = Math.SinCos(node * SpinPeriodRadians / spinSteps);
+            var (sine, cosine) = Math.SinCos(node * PrismGeometry.SpinPeriodRadians / spinSteps);
             var first = (cosine * firstBase) + (sine * secondBase);
             var second = (-sine * firstBase) + (cosine * secondBase);
             data.FirstAxes[node] = first;

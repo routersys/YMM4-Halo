@@ -27,6 +27,8 @@ internal static class PrismGeometry
     public const int ExitKindCount = ReflectionExit + 1;
     public const int LabelCount = EntryKindCount * ExitKindCount;
     public const int MaximumPathCount = LabelCount;
+    public const double SpinPeriodRadians = 2.0 * Math.PI / SideFaceCount;
+    public const double SpinSectorRadians = Math.PI / SideFaceCount;
 
     private const double MinimumCosine = 1e-9;
     private const double MinimumProjection = 1e-12;

@@ -16,7 +16,7 @@ internal static class RingProfile
         var azimuths = HaloSettings.RandomAzimuthSteps;
         var length = 2.0 * HaloSettings.RandomCrystalLengthRatio;
         var inclinationStep = Math.PI / 2.0 / inclinations;
-        var azimuthStep = Math.PI / 6.0 / azimuths;
+        var azimuthStep = PrismGeometry.SpinSectorRadians / azimuths;
         var step = HaloSettings.GetRingStepDegrees();
         var weights = SolarSpectrum.Weights;
         var referenceIndex = IceOptics.RefractiveIndex(HaloSettings.ReferenceWavelengthNanometers);
@@ -33,7 +33,7 @@ internal static class RingProfile
                 for (var column = 0; column < azimuths; column++)
                 {
                     var azimuth = (column + 0.5) * azimuthStep;
-                    var orientation = Math.Cos(inclination) * inclinationStep * azimuthStep * 6.0 / Math.PI;
+                    var orientation = Math.Cos(inclination) * inclinationStep * azimuthStep * PrismGeometry.SideFaceCount / Math.PI;
                     var incoming = new Vec3(-Math.Cos(inclination) * Math.Cos(azimuth), -Math.Cos(inclination) * Math.Sin(azimuth), -Math.Sin(inclination));
                     var count = PrismGeometry.Enumerate(incoming, length, referenceIndex, PathKinds.SideToSide | PathKinds.SideToEnd | PathKinds.EndToSide, paths);
                     for (var path = 0; path < count; path++)
