@@ -12,76 +12,10 @@ internal static class CrystalScatter
 {
     private const double MergeSpreadDegrees = 0.075;
 
-    private struct Sample
-    {
-        public double Azimuth;
-        public double Elevation;
-        public double Weight;
-        public bool Valid;
-    }
-
-    private struct Corner
-    {
-        public bool Valid;
-        public double Azimuth;
-        public double Elevation;
-        public double Spread;
-        public Tristimulus Weight;
-    }
-
-    private sealed class SliceData(int nodeCount, SpectralBand[] bands)
-    {
-        public SpectralBand[] Bands { get; } = bands;
-        public int WavelengthCount { get; } = bands.Length;
-        public PrismPath[][] Paths { get; } = Enumerable.Range(0, nodeCount).Select(_ => new PrismPath[PrismGeometry.MaximumPathCount]).ToArray();
-        public int[] PathCounts { get; } = new int[nodeCount];
-        public Vec3[] Incoming { get; } = new Vec3[nodeCount];
-        public Vec3[] FirstAxes { get; } = new Vec3[nodeCount];
-        public Vec3[] SecondAxes { get; } = new Vec3[nodeCount];
-        public Sample[] Samples { get; } = new Sample[PrismGeometry.LabelCount * nodeCount * bands.Length];
-        public Corner[] Corners { get; } = new Corner[PrismGeometry.LabelCount * nodeCount];
-        public bool[] Used { get; } = new bool[PrismGeometry.LabelCount];
-        private int NodeCount { get; } = nodeCount;
-
-        public int Slot(int label, int node, int wavelength)
-            => (label * NodeCount + node) * WavelengthCount + wavelength;
-
-        public void Reset()
-        {
-            for (var label = 0; label < Used.Length; label++)
-            {
-                if (!Used[label])
-                    continue;
-
-                Array.Clear(Samples, label * NodeCount * WavelengthCount, NodeCount * WavelengthCount);
-                Array.Clear(Corners, label * NodeCount, NodeCount);
-                Used[label] = false;
-            }
-        }
-
-        public void Combine()
-        {
-            for (var label = 0; label < Used.Length; label++)
-            {
-                if (!Used[label])
-                    continue;
-
-                for (var node = 0; node < NodeCount; node++)
-                    Corners[label * NodeCount + node] = CrystalScatter.Combine(Wavelengths(label, node), Bands);
-            }
-        }
-
-        public ref readonly Corner CornerAt(int label, int node)
-            => ref Corners[label * NodeCount + node];
-
-        public ReadOnlySpan<Sample> Wavelengths(int label, int node)
-            => Samples.AsSpan((label * NodeCount + node) * WavelengthCount, WavelengthCount);
-    }
-
     private sealed class Workspace(int nodeCount, SpectralBand[] bands)
     {
         public ScatterGrid Grid { get; } = new();
-        public SliceData[] Slices { get; } = [new(nodeCount, bands), new(nodeCount, bands)];
+        public StripSlice[] Slices { get; } = [new(nodeCount, bands), new(nodeCount, bands)];
     }
 
     public static float[] Integrate(CrystalFamily family, double sunElevationDegrees, double lengthRatio, double tiltDegrees)
@@ -110,9 +44,9 @@ internal static class CrystalScatter
                     var current = workspace.Slices[strip & 1];
                     var azimuth = (chunk.FirstStrip + strip) * Math.PI / azimuthSteps;
                     var axis = plate ? CrystalOrientations.PlateAxis(chunk.Layer.Tilt, azimuth) : CrystalOrientations.ColumnAxis(chunk.Layer.Tilt, azimuth);
-                    FillSlice(current, axis, incoming, length, spinSteps, kinds, sunElevationDegrees);
+                    current.Fill(axis, incoming, length, kinds, sunElevationDegrees);
                     if (strip > 0)
-                        SplatStrip(workspace.Grid, workspace.Slices[(strip - 1) & 1], current, spinSteps, quadWeight);
+                        SplatStrip(workspace.Grid, workspace.Slices[(strip - 1) & 1], current, quadWeight);
                 }
 
                 return workspace;
@@ -122,67 +56,14 @@ internal static class CrystalScatter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void FillSlice(SliceData data, Vec3 axis, Vec3 incoming, double length, int spinSteps, PathKinds kinds, double sunElevationDegrees)
-    {
-        var referenceIndex = IceOptics.RefractiveIndex(HaloSettings.ReferenceWavelengthNanometers);
-        var helper = Math.Abs(axis.Z) < 0.9 ? new Vec3(0.0, 0.0, 1.0) : new Vec3(1.0, 0.0, 0.0);
-        var firstBase = helper.Cross(axis).Normalized();
-        var secondBase = axis.Cross(firstBase);
-        for (var node = 0; node <= spinSteps; node++)
-        {
-            var (sine, cosine) = Math.SinCos(node * PrismGeometry.SpinPeriodRadians / spinSteps);
-            var first = (cosine * firstBase) + (sine * secondBase);
-            var second = (-sine * firstBase) + (cosine * secondBase);
-            data.FirstAxes[node] = first;
-            data.SecondAxes[node] = second;
-            var local = new Vec3(incoming.Dot(first), incoming.Dot(second), incoming.Dot(axis));
-            data.Incoming[node] = local;
-            data.PathCounts[node] = PrismGeometry.Enumerate(local, length, referenceIndex, kinds, data.Paths[node]);
-        }
-
-        data.Reset();
-        for (var wavelength = 0; wavelength < data.WavelengthCount; wavelength++)
-        {
-            var index = IceOptics.RefractiveIndex(data.Bands[wavelength].Wavelength);
-            for (var node = 0; node <= spinSteps; node++)
-            {
-                var paths = data.Paths[node];
-                for (var path = 0; path < data.PathCounts[node]; path++)
-                {
-                    var current = paths[path];
-                    Vec3 exit;
-                    double factor;
-                    var found = current.Exit == PrismGeometry.ReflectionExit
-                        ? PrismGeometry.TryReflect(data.Incoming[node], current, index, out exit, out factor)
-                        : PrismGeometry.TryRefract(data.Incoming[node], current, index, out exit, out factor);
-                    if (!found)
-                        continue;
-
-                    var sky = -((exit.X * data.FirstAxes[node]) + (exit.Y * data.SecondAxes[node]) + (exit.Z * axis));
-                    data.Samples[data.Slot(current.Label, node, wavelength)] = new Sample
-                    {
-                        Azimuth = Math.Atan2(sky.Y, sky.X) / HaloSettings.RadiansPerDegree,
-                        Elevation = Math.Asin(Math.Clamp(sky.Z, -1.0, 1.0)) / HaloSettings.RadiansPerDegree - sunElevationDegrees,
-                        Weight = current.Geometry * factor,
-                        Valid = true,
-                    };
-                    data.Used[current.Label] = true;
-                }
-            }
-        }
-
-        data.Combine();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void SplatStrip(ScatterGrid grid, SliceData previous, SliceData current, int spinSteps, double quadWeight)
+    private static void SplatStrip(ScatterGrid grid, StripSlice previous, StripSlice current, double quadWeight)
     {
         for (var label = 0; label < PrismGeometry.LabelCount; label++)
         {
             if (!previous.Used[label] && !current.Used[label])
                 continue;
 
-            for (var node = 0; node < spinSteps; node++)
+            for (var node = 0; node < current.SpinSteps; node++)
             {
                 SplatQuad(
                     grid,
@@ -201,7 +82,7 @@ internal static class CrystalScatter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void SplatQuad(ScatterGrid grid, SpectralBand[] bands, ReadOnlySpan<Sample> first, ReadOnlySpan<Sample> second, ReadOnlySpan<Sample> third, ReadOnlySpan<Sample> fourth, in Corner c00, in Corner c01, in Corner c10, in Corner c11, double quadWeight)
+    private static void SplatQuad(ScatterGrid grid, SpectralBand[] bands, ReadOnlySpan<ExitSample> first, ReadOnlySpan<ExitSample> second, ReadOnlySpan<ExitSample> third, ReadOnlySpan<ExitSample> fourth, in Corner c00, in Corner c01, in Corner c10, in Corner c11, double quadWeight)
     {
         var anchor = c00.Valid ? c00 : c01.Valid ? c01 : c10.Valid ? c10 : c11;
         if (!anchor.Valid)
@@ -226,50 +107,7 @@ internal static class CrystalScatter
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static Corner Combine(ReadOnlySpan<Sample> samples, SpectralBand[] bands)
-    {
-        var total = new Tristimulus();
-        var luminance = 0.0;
-        var azimuth = 0.0;
-        var elevation = 0.0;
-        var reference = double.NaN;
-        for (var wavelength = 0; wavelength < samples.Length; wavelength++)
-        {
-            var sample = samples[wavelength];
-            if (!sample.Valid)
-                continue;
-
-            if (double.IsNaN(reference))
-                reference = sample.Azimuth;
-            var weight = sample.Weight * bands[wavelength].Weight.Y;
-            total += sample.Weight * bands[wavelength].Weight;
-            luminance += weight;
-            azimuth += weight * Unwrap(sample.Azimuth, reference);
-            elevation += weight * sample.Elevation;
-        }
-
-        if (double.IsNaN(reference))
-            return default;
-        if (luminance <= 0.0)
-            return new Corner { Valid = true, Azimuth = reference };
-
-        var center = new Corner { Valid = true, Azimuth = azimuth / luminance, Elevation = elevation / luminance, Weight = total };
-        var spread = 0.0;
-        for (var wavelength = 0; wavelength < samples.Length; wavelength++)
-        {
-            if (!samples[wavelength].Valid)
-                continue;
-
-            var offset = Math.Max(Math.Abs(Unwrap(samples[wavelength].Azimuth, reference) - center.Azimuth), Math.Abs(samples[wavelength].Elevation - center.Elevation));
-            spread = Math.Max(spread, offset);
-        }
-
-        center.Spread = spread;
-        return center;
-    }
-
-    private static Corner Single(Sample sample, Tristimulus spectrum)
+    private static Corner Single(ExitSample sample, Tristimulus spectrum)
         => sample.Valid ? new Corner { Valid = true, Azimuth = sample.Azimuth, Elevation = sample.Elevation, Weight = sample.Weight * spectrum } : default;
 
     private static Corner Complete(Corner corner, Corner anchor)
@@ -277,7 +115,7 @@ internal static class CrystalScatter
         if (!corner.Valid)
             return new Corner { Valid = true, Azimuth = anchor.Azimuth, Elevation = anchor.Elevation };
 
-        corner.Azimuth = Unwrap(corner.Azimuth, anchor.Azimuth);
+        corner.Azimuth = Corner.Unwrap(corner.Azimuth, anchor.Azimuth);
         return corner;
     }
 
@@ -317,13 +155,6 @@ internal static class CrystalScatter
                     unit * weight);
             }
         }
-    }
-
-    private static double Unwrap(double azimuth, double reference)
-    {
-        if (azimuth - reference > HaloSettings.HalfTurnDegrees)
-            return azimuth - HaloSettings.FullTurnDegrees;
-        return reference - azimuth > HaloSettings.HalfTurnDegrees ? azimuth + HaloSettings.FullTurnDegrees : azimuth;
     }
 
     private static double Distance(in Corner first, in Corner second)
