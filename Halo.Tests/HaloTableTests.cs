@@ -344,6 +344,20 @@ public sealed class HaloTableTests
         Assert.Equal(middle, Value(texels, 100 * ScatterGrid.Width + 300, 1), middle * 0.01f);
     }
 
+    [Theory]
+    [InlineData(0.0)]
+    [InlineData(2.0)]
+    public void EveryRowOfTheScatterTableIsComposed(double diameter)
+    {
+        const int margin = 30;
+        var texels = HaloTable.ComposeScatter(Filled(0.01), Empty(), 1.0, 0.0, 20.0, diameter, 1.0);
+        var middle = Value(texels, 133 * ScatterGrid.Width + 300, 1);
+
+        Assert.True(middle > 0f);
+        Assert.All(Enumerable.Range(margin * ScatterGrid.Width, (ScatterGrid.Height - 2 * margin) * ScatterGrid.Width), texel =>
+            Assert.Equal(middle, Value(texels, texel, 1), middle * 0.01f));
+    }
+
     [Fact]
     public void ALightOnTheAzimuthEdgeIsReflectedIntoTheNeighbouringTexel()
     {
