@@ -30,8 +30,8 @@ internal static class PrismGeometry
 
     private const double MinimumCosine = 1e-9;
     private const double MinimumProjection = 1e-12;
-    private const double FirstSideAngleDegrees = 30.0;
-    private const double SideAngleStepDegrees = 60.0;
+    private const double SideAngleStepDegrees = HaloSettings.FullTurnDegrees / SideFaceCount;
+    private const double FirstSideAngleDegrees = SideAngleStepDegrees / 2.0;
 
     public static readonly double Apothem = Math.Sqrt(3.0) / 2.0;
     public static readonly double EndFaceArea = 1.5 * Math.Sqrt(3.0);

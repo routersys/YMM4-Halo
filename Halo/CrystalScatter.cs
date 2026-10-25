@@ -11,8 +11,6 @@ internal enum CrystalFamily
 internal static class CrystalScatter
 {
     private const double SpinPeriodRadians = Math.PI / 3.0;
-    private const double HalfTurnDegrees = 180.0;
-    private const double FullTurnDegrees = 360.0;
     private const double MergeSpreadDegrees = 0.075;
 
     private readonly record struct Layer(double Tilt, double Weight);
@@ -328,9 +326,9 @@ internal static class CrystalScatter
 
     private static double Unwrap(double azimuth, double reference)
     {
-        if (azimuth - reference > HalfTurnDegrees)
-            return azimuth - FullTurnDegrees;
-        return reference - azimuth > HalfTurnDegrees ? azimuth + FullTurnDegrees : azimuth;
+        if (azimuth - reference > HaloSettings.HalfTurnDegrees)
+            return azimuth - HaloSettings.FullTurnDegrees;
+        return reference - azimuth > HaloSettings.HalfTurnDegrees ? azimuth + HaloSettings.FullTurnDegrees : azimuth;
     }
 
     private static double Distance(in Corner first, in Corner second)

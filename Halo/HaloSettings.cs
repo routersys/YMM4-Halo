@@ -8,6 +8,8 @@ internal static class HaloSettings
     public const int TexelChannels = 4;
     public const int TexelBytes = TexelChannels * sizeof(ushort);
     public const double RadiansPerDegree = Math.PI / 180.0;
+    public const double HalfTurnDegrees = 180.0;
+    public const double FullTurnDegrees = 360.0;
 
     public const int RingTableWidth = 1024;
     public const double RingStartDegrees = 10.0;
