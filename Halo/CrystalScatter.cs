@@ -42,7 +42,7 @@ internal static class CrystalScatter
                     var axis = plate ? CrystalOrientations.PlateAxis(chunk.Layer.Tilt, azimuth) : CrystalOrientations.ColumnAxis(chunk.Layer.Tilt, azimuth);
                     current.Fill(axis, incoming, length, kinds, sunElevationDegrees);
                     if (strip > 0)
-                        ScatterSplat.SplatStrip(workspace.Grid, workspace.Slices[(strip - 1) & 1], current, quadWeight);
+                        ScatterSplat.Strip(workspace.Grid, workspace.Slices[(strip - 1) & 1], current, quadWeight);
                 }
 
                 return workspace;

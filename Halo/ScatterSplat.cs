@@ -7,7 +7,7 @@ internal static class ScatterSplat
     private const double MergeSpreadDegrees = 0.075;
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public static void SplatStrip(ScatterGrid grid, StripSlice previous, StripSlice current, double quadWeight)
+    public static void Strip(ScatterGrid grid, StripSlice previous, StripSlice current, double quadWeight)
     {
         for (var label = 0; label < PrismGeometry.LabelCount; label++)
         {
@@ -16,7 +16,7 @@ internal static class ScatterSplat
 
             for (var node = 0; node < current.SpinSteps; node++)
             {
-                SplatQuad(
+                Quad(
                     grid,
                     previous.Bands,
                     previous.Wavelengths(label, node),
@@ -33,45 +33,45 @@ internal static class ScatterSplat
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void SplatQuad(ScatterGrid grid, SpectralBand[] bands, ReadOnlySpan<ExitSample> first, ReadOnlySpan<ExitSample> second, ReadOnlySpan<ExitSample> third, ReadOnlySpan<ExitSample> fourth, in Corner c00, in Corner c01, in Corner c10, in Corner c11, double quadWeight)
+    private static void Quad(ScatterGrid grid, SpectralBand[] bands, ReadOnlySpan<ExitSample> samples00, ReadOnlySpan<ExitSample> samples01, ReadOnlySpan<ExitSample> samples10, ReadOnlySpan<ExitSample> samples11, in Corner c00, in Corner c01, in Corner c10, in Corner c11, double quadWeight)
     {
-        var anchor = c00.Valid ? c00 : c01.Valid ? c01 : c10.Valid ? c10 : c11;
-        if (!anchor.Valid)
+        var reference = c00.Valid ? c00 : c01.Valid ? c01 : c10.Valid ? c10 : c11;
+        if (!reference.Valid)
             return;
 
         if (c00.Spread <= MergeSpreadDegrees && c01.Spread <= MergeSpreadDegrees && c10.Spread <= MergeSpreadDegrees && c11.Spread <= MergeSpreadDegrees)
         {
-            SplatPatch(grid, Complete(c00, anchor), Complete(c01, anchor), Complete(c10, anchor), Complete(c11, anchor), quadWeight);
+            Patch(grid, AlignTo(c00, reference), AlignTo(c01, reference), AlignTo(c10, reference), AlignTo(c11, reference), quadWeight);
             return;
         }
 
         for (var wavelength = 0; wavelength < bands.Length; wavelength++)
         {
-            var spectrum = bands[wavelength].Weight;
-            var single00 = Single(first[wavelength], spectrum);
-            var single01 = Single(second[wavelength], spectrum);
-            var single10 = Single(third[wavelength], spectrum);
-            var single11 = Single(fourth[wavelength], spectrum);
-            var single = single00.Valid ? single00 : single01.Valid ? single01 : single10.Valid ? single10 : single11;
-            if (single.Valid)
-                SplatPatch(grid, Complete(single00, single), Complete(single01, single), Complete(single10, single), Complete(single11, single), quadWeight);
+            var bandWeight = bands[wavelength].Weight;
+            var band00 = BandCorner(samples00[wavelength], bandWeight);
+            var band01 = BandCorner(samples01[wavelength], bandWeight);
+            var band10 = BandCorner(samples10[wavelength], bandWeight);
+            var band11 = BandCorner(samples11[wavelength], bandWeight);
+            var bandReference = band00.Valid ? band00 : band01.Valid ? band01 : band10.Valid ? band10 : band11;
+            if (bandReference.Valid)
+                Patch(grid, AlignTo(band00, bandReference), AlignTo(band01, bandReference), AlignTo(band10, bandReference), AlignTo(band11, bandReference), quadWeight);
         }
     }
 
-    private static Corner Single(ExitSample sample, Tristimulus spectrum)
-        => sample.Valid ? new Corner { Valid = true, Azimuth = sample.Azimuth, Elevation = sample.Elevation, Weight = sample.Weight * spectrum } : default;
+    private static Corner BandCorner(ExitSample sample, Tristimulus bandWeight)
+        => sample.Valid ? new Corner { Valid = true, Azimuth = sample.Azimuth, Elevation = sample.Elevation, Weight = sample.Weight * bandWeight } : default;
 
-    private static Corner Complete(Corner corner, Corner anchor)
+    private static Corner AlignTo(Corner corner, Corner reference)
     {
         if (!corner.Valid)
-            return new Corner { Valid = true, Azimuth = anchor.Azimuth, Elevation = anchor.Elevation };
+            return new Corner { Valid = true, Azimuth = reference.Azimuth, Elevation = reference.Elevation };
 
-        corner.Azimuth = Corner.Unwrap(corner.Azimuth, anchor.Azimuth);
+        corner.Azimuth = Corner.Unwrap(corner.Azimuth, reference.Azimuth);
         return corner;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static unsafe void SplatPatch(ScatterGrid grid, in Corner c00, in Corner c01, in Corner c10, in Corner c11, double quadWeight)
+    private static unsafe void Patch(ScatterGrid grid, in Corner c00, in Corner c01, in Corner c10, in Corner c11, double quadWeight)
     {
         var along = Math.Max(Distance(c00, c10), Distance(c01, c11));
         var across = Math.Max(Distance(c00, c01), Distance(c10, c11));
