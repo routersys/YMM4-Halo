@@ -12,10 +12,6 @@ internal static class CrystalScatter
 {
     private const double MergeSpreadDegrees = 0.075;
 
-    private readonly record struct Layer(double Tilt, double Weight);
-
-    private readonly record struct Chunk(Layer Layer, int FirstStrip, int StripCount);
-
     private struct Sample
     {
         public double Azimuth;
@@ -97,8 +93,8 @@ internal static class CrystalScatter
         var length = 2.0 * lengthRatio;
         var elevation = sunElevationDegrees * HaloSettings.RadiansPerDegree;
         var incoming = new Vec3(-Math.Cos(elevation), 0.0, -Math.Sin(elevation));
-        var layers = plate ? PlateLayers(tiltDegrees) : ColumnLayers(tiltDegrees);
-        var chunks = BuildChunks(layers, azimuthSteps);
+        var layers = plate ? CrystalOrientations.PlateLayers(tiltDegrees) : CrystalOrientations.ColumnLayers(tiltDegrees);
+        var chunks = CrystalOrientations.BuildChunks(layers, azimuthSteps);
         var bands = SolarSpectrum.Bands(plate ? 1 : HaloSettings.ColumnWavelengthStride);
         var grids = new System.Collections.Concurrent.ConcurrentBag<ScatterGrid>();
         Parallel.For(
@@ -113,7 +109,7 @@ internal static class CrystalScatter
                 {
                     var current = workspace.Slices[strip & 1];
                     var azimuth = (chunk.FirstStrip + strip) * Math.PI / azimuthSteps;
-                    var axis = plate ? PlateAxis(chunk.Layer.Tilt, azimuth) : ColumnAxis(chunk.Layer.Tilt, azimuth);
+                    var axis = plate ? CrystalOrientations.PlateAxis(chunk.Layer.Tilt, azimuth) : CrystalOrientations.ColumnAxis(chunk.Layer.Tilt, azimuth);
                     FillSlice(current, axis, incoming, length, spinSteps, kinds, sunElevationDegrees);
                     if (strip > 0)
                         SplatStrip(workspace.Grid, workspace.Slices[(strip - 1) & 1], current, spinSteps, quadWeight);
@@ -332,41 +328,6 @@ internal static class CrystalScatter
 
     private static double Distance(in Corner first, in Corner second)
         => Math.Max(Math.Abs(first.Azimuth - second.Azimuth), Math.Abs(first.Elevation - second.Elevation));
-
-    private static Chunk[] BuildChunks(Layer[] layers, int azimuthSteps)
-    {
-        var chunks = new List<Chunk>();
-        foreach (var layer in layers)
-        {
-            for (var strip = 0; strip < azimuthSteps; strip += HaloSettings.StripsPerTask)
-                chunks.Add(new Chunk(layer, strip, Math.Min(HaloSettings.StripsPerTask, azimuthSteps - strip)));
-        }
-
-        return [.. chunks];
-    }
-
-    private static Layer[] PlateLayers(double tiltDegrees)
-    {
-        var nodes = HaloSettings.PlateTiltRadialNodes;
-        var tilt = tiltDegrees * HaloSettings.RadiansPerDegree;
-        var layers = new Layer[nodes];
-        for (var node = 0; node < nodes; node++)
-            layers[node] = new Layer(tilt * HaloSettings.GetPlateTiltQuantile(node), 1.0 / nodes);
-        return layers;
-    }
-
-    private static Layer[] ColumnLayers(double tiltDegrees)
-    {
-        var quantiles = HaloSettings.ColumnTiltQuantiles;
-        var tilt = tiltDegrees * HaloSettings.RadiansPerDegree;
-        return [.. quantiles.Select(quantile => new Layer(tilt * quantile, 1.0 / quantiles.Length))];
-    }
-
-    private static Vec3 PlateAxis(double tilt, double azimuth)
-        => new(Math.Sin(tilt) * Math.Cos(azimuth), Math.Sin(tilt) * Math.Sin(azimuth), Math.Cos(tilt));
-
-    private static Vec3 ColumnAxis(double tilt, double azimuth)
-        => new(Math.Cos(tilt) * Math.Cos(azimuth), Math.Cos(tilt) * Math.Sin(azimuth), Math.Sin(tilt));
 
     private static float[] ToRadiance(ScatterGrid grid, double sunElevationDegrees)
     {
