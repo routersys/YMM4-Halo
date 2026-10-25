@@ -20,11 +20,11 @@ internal readonly record struct PrismPath(int Entry, int Exit, double Geometry)
 internal static class PrismGeometry
 {
     public const int SideFaceCount = 6;
-    public const int UpperEnd = 6;
-    public const int LowerEnd = 7;
-    public const int ReflectionExit = 8;
-    public const int EntryKindCount = 8;
-    public const int ExitKindCount = 9;
+    public const int UpperEnd = SideFaceCount;
+    public const int LowerEnd = UpperEnd + 1;
+    public const int ReflectionExit = LowerEnd + 1;
+    public const int EntryKindCount = LowerEnd + 1;
+    public const int ExitKindCount = ReflectionExit + 1;
     public const int LabelCount = EntryKindCount * ExitKindCount;
     public const int MaximumPathCount = LabelCount;
 
