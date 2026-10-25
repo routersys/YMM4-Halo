@@ -35,7 +35,7 @@ internal static class ScatterSplat
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void Quad(ScatterGrid grid, SpectralBand[] bands, ReadOnlySpan<ExitSample> samples00, ReadOnlySpan<ExitSample> samples01, ReadOnlySpan<ExitSample> samples10, ReadOnlySpan<ExitSample> samples11, in Corner c00, in Corner c01, in Corner c10, in Corner c11, double quadWeight)
     {
-        var reference = c00.Valid ? c00 : c01.Valid ? c01 : c10.Valid ? c10 : c11;
+        var reference = FirstValid(c00, c01, c10, c11);
         if (!reference.Valid)
             return;
 
@@ -52,11 +52,14 @@ internal static class ScatterSplat
             var band01 = BandCorner(samples01[wavelength], bandWeight);
             var band10 = BandCorner(samples10[wavelength], bandWeight);
             var band11 = BandCorner(samples11[wavelength], bandWeight);
-            var bandReference = band00.Valid ? band00 : band01.Valid ? band01 : band10.Valid ? band10 : band11;
+            var bandReference = FirstValid(band00, band01, band10, band11);
             if (bandReference.Valid)
                 Patch(grid, AlignTo(band00, bandReference), AlignTo(band01, bandReference), AlignTo(band10, bandReference), AlignTo(band11, bandReference), quadWeight);
         }
     }
+
+    private static Corner FirstValid(in Corner first, in Corner second, in Corner third, in Corner fourth)
+        => first.Valid ? first : second.Valid ? second : third.Valid ? third : fourth;
 
     private static Corner BandCorner(ExitSample sample, Tristimulus bandWeight)
         => sample.Valid ? new Corner { Valid = true, Azimuth = sample.Azimuth, Elevation = sample.Elevation, Weight = sample.Weight * bandWeight } : default;
