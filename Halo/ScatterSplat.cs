@@ -33,7 +33,18 @@ internal static class ScatterSplat
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void Quad(ScatterGrid grid, SpectralBand[] bands, ReadOnlySpan<ExitSample> samples00, ReadOnlySpan<ExitSample> samples01, ReadOnlySpan<ExitSample> samples10, ReadOnlySpan<ExitSample> samples11, in Corner c00, in Corner c01, in Corner c10, in Corner c11, double quadWeight)
+    private static void Quad(
+        ScatterGrid grid,
+        SpectralBand[] bands,
+        ReadOnlySpan<ExitSample> samples00,
+        ReadOnlySpan<ExitSample> samples01,
+        ReadOnlySpan<ExitSample> samples10,
+        ReadOnlySpan<ExitSample> samples11,
+        in Corner c00,
+        in Corner c01,
+        in Corner c10,
+        in Corner c11,
+        double quadWeight)
     {
         var reference = FirstValid(c00, c01, c10, c11);
         if (!reference.Valid)
